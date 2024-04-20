@@ -1,3 +1,38 @@
+# Multiple Topic Monitor
+
+This is a ROS 2 package for monitoring the frequency and delay of multiple topics.
+
+## Installation
+
+Clone this repository into your ROS 2 workspace and build it using colcon:
+
+```bash
+cd ~/your_ros2_workspace/src
+git clone https://github.com/yukkysaito/multiple_topic_monitor.git
+cd ..
+colcon build
+```
+
+## Usage
+
+### Running the Node
+
+To run the multiple topic monitor node, use the `ros2 run` command followed by the package name and node name, along with the topics you want to monitor:
+
+```bash
+ros2 run multiple_topic_monitor multiple_topic_monitor /topic1 /topic2 /topic3
+```
+
+You can also specify the window size for calculating averages using the `-w` or `--window` option:
+
+```bash
+ros2 run multiple_topic_monitor multiple_topic_monitor /topic1 /topic2 /topic3 -w 10
+```
+
+### Output
+
+The node will output the frequency (Hz) and delay (if applicable) for each topic being monitored. The delay is measured in seconds.
+
 ```
 yukky@yukky:~/workspace/multiple_topic_monitor$ ros2 run multiple_topic_monitor multiple_topic_monitor /planning/hazard_lights_cmd /tf /perception/obstacle_segmentation/pointcloud -w 10
 [INFO 1713632632.003018708] [topic_monitor]: Subscribed to /planning/hazard_lights_cmd
@@ -27,3 +62,8 @@ yukky@yukky:~/workspace/multiple_topic_monitor$ ros2 run multiple_topic_monitor 
 [INFO 1713632636.088843625] [topic_monitor]: /perception/obstacle_segmentation/pointcloud Delay (s): Avg: 0.021, Min: 0.021, Max: 0.021, Std Dev: 0.00015
 
 ```
+
+
+## License
+
+This software is licensed under the BSD-3-Clause License for the original code, and additional code written by Yukihiro Saito is licensed under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for more details.
