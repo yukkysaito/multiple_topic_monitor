@@ -23,11 +23,10 @@ To run the multiple topic monitor node, use the `ros2 run` command followed by t
 ros2 run multiple_topic_monitor multiple_topic_monitor /topic1 /topic2 /topic3
 ```
 
-You can also specify the window size for calculating averages using the `-w` or `--window` option:
-
-```bash
-ros2 run multiple_topic_monitor multiple_topic_monitor /topic1 /topic2 /topic3 -w 10
-```
+| Option           | Description                                                                     |
+| ---------------- | ------------------------------------------------------------------------------- |
+| `-w`, `--window` | Specifies the window size for calculating message averages. Default is `10000`. |
+| `--csv`          | Enables CSV output mode.                                                        |
 
 ### Output
 
@@ -63,6 +62,20 @@ yukky@yukky:~/workspace/multiple_topic_monitor$ ros2 run multiple_topic_monitor 
 
 ```
 
+#### csv format
+```
+yukky@yukky:~/workspace/multiple_topic_monitor/src/multiple_topic_monitor$ ros2 run multiple_topic_monitor multiple_topic_monitor /planning/hazard_lights_cmd /tf /perception/obstacle_segmentation/pointcloud -w 10 --csv
+[INFO 1713635027.749710504] [topic_monitor]: Subscribed to /planning/hazard_lights_cmd
+[INFO 1713635027.802425796] [topic_monitor]: Subscribed to /tf
+[INFO 1713635027.833324882] [topic_monitor]: Subscribed to /perception/obstacle_segmentation/pointcloud
+[INFO 1713635027.834031931] [topic_monitor]: No header found for topic /planning/hazard_lights_cmd
+[INFO 1713635027.834483751] [topic_monitor]: No header found for topic /tf
+timestamp, /planning/hazard_lights_cmd hz, /tf hz, /perception/obstacle_segmentation/pointcloud hz, /planning/hazard_lights_cmd delay[ms], /tf delay[ms], /perception/obstacle_segmentation/pointcloud delay[ms]
+2024-04-21 02:43:48.833518, 10.00, 39.85, 10.00, NA, NA, 20.75
+2024-04-21 02:43:49.833592, 10.09, 40.36, 10.00, NA, NA, 20.90
+2024-04-21 02:43:50.833570, 10.01, 39.97, 10.00, NA, NA, 20.92
+2024-04-21 02:43:51.833562, 10.03, 40.05, 10.00, NA, NA, 21.00
+```
 
 ## License
 
