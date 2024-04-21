@@ -1,34 +1,3 @@
-# Copyright (c) 2008, Willow Garage, Inc.
-# SPDX-License-Identifier: BSD-3-Clause
-
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-#
-#    * Redistributions of source code must retain the above copyright
-#      notice, this list of conditions and the following disclaimer.
-#
-#    * Redistributions in binary form must reproduce the above copyright
-#      notice, this list of conditions and the following disclaimer in the
-#      documentation and/or other materials provided with the distribution.
-#
-#    * Neither the name of the copyright holder nor the names of its
-#      contributors may be used to endorse or promote products derived from
-#      this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
-
-# Additional code written by Yukihiro Saito under Apache License, Version 2.0
-
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
@@ -37,6 +6,7 @@ from argparse import ArgumentParser, ArgumentTypeError
 from collections import deque
 import functools
 import math
+import matplotlib.pyplot as plt
 from ros2topic.api import get_msg_class
 from datetime import datetime
 
@@ -49,11 +19,17 @@ def positive_int(value):
     return ivalue
 
 class TopicMonitor(Node):
-    def __init__(self, topics, window_size=10, csv_mode=False):
+    def __init__(self, topics, window_size=10, csv_mode=False, plot_mode=False):
         super().__init__('topic_monitor')
         self.window_size = window_size
         self.csv_mode = csv_mode
-        self.topic_stats = {topic: {"times": deque(maxlen=window_size), "delays": deque(maxlen=window_size)} for topic in topics}
+        self.plot_mode = plot_mode
+        self.topic_stats = {topic: {"times": deque(maxlen=window_size), "delays": deque(maxlen=window_size), "hz_data": [], "delay_data": []} for topic in topics}
+        if self.plot_mode:
+            plt.ion()
+            self.fig, (self.ax1, self.ax2) = plt.subplots(2, 1)
+            plt.show()
+
         self.first_row_printed = False
 
         for topic in topics:
@@ -131,21 +107,63 @@ class TopicMonitor(Node):
 
                 delays = stats["delays"]
                 if len(delays):
-                    avg_delay = sum(delays) / len(delays) / 1e9
-                    min_delay = min(delays) / 1e9
-                    max_delay = max(delays) / 1e9
-                    std_dev = math.sqrt(sum((x - avg_delay * 1e9) ** 2 for x in delays) / len(delays)) / 1e9
-                    self.get_logger().info(f"{topic} Delay (s): Avg: {avg_delay:.3f}, Min: {min_delay:.3f}, Max: {max_delay:.3f}, Std Dev: {std_dev:.5f}")
+                    avg_delay = sum(delays) / len(delays) / 1e6
+                    min_delay = min(delays) / 1e6
+                    max_delay = max(delays) / 1e6
+                    std_dev = math.sqrt(sum((x - avg_delay * 1e6) ** 2 for x in delays) / len(delays)) / 1e6
+                    self.get_logger().info(f"{topic} Delay (ms): Avg: {avg_delay:.3f}, Min: {min_delay:.3f}, Max: {max_delay:.3f}, Std Dev: {std_dev:.5f}")
+        if self.plot_mode:
+            for topic, stats in self.topic_stats.items():
+                hz = "NA"
+                avg_delay = "NA"
+                times = stats["times"]
+                if len(times) > 1:
+                    dt = times[-1] - times[0]
+                    count = len(times) - 1
+                    hz = count / (dt / 1e9) if dt else 0
+                else:
+                    hz = "NA"
+                delays = stats["delays"]
+                if len(delays):
+                    avg_delay = sum(delays) / len(delays) / 1e6  # Convert nanoseconds to milliseconds
+                else:
+                    avg_delay = "NA"
+                self.topic_stats[topic]["delay_data"].append((now, avg_delay))
+                self.topic_stats[topic]["hz_data"].append((now, hz))
+
+            self.update_plot()
+
+    def update_plot(self):
+        self.ax1.clear()
+        self.ax2.clear()
+        self.ax1.set_title('Topic Hz')
+        self.ax2.set_title('Topic Delay')
+        self.ax1.set_xlabel('Timestamp')
+        self.ax2.set_xlabel('Timestamp')
+        self.ax1.set_ylabel('Hz')
+        self.ax2.set_ylabel('Delay (ms)')
+        for topic, stats in self.topic_stats.items():
+            if stats["hz_data"] and stats["hz_data"][0][1] != "NA":
+                timestamps, hzs = zip(*stats["hz_data"])
+                self.ax1.plot(timestamps, hzs, label=topic)
+            if stats["delay_data"] and stats["delay_data"][0][1] != "NA":
+                timestamps, delays = zip(*stats["delay_data"])
+                self.ax2.plot(timestamps, delays, label=f"{topic} Delay")
+        self.ax1.legend()
+        self.ax2.legend()
+        plt.pause(0.001)
+
 
 def main(args=None):
     parser = ArgumentParser(description="Measure the frequency and delay of topics")
     parser.add_argument("topics", nargs='+', help="Topic names to monitor")
     parser.add_argument("-w", "--window", type=positive_int, default=DEFAULT_WINDOW_SIZE, help="Number of messages to average over")
     parser.add_argument("--csv", action="store_true", help="Enable CSV output mode")
+    parser.add_argument("--plot", action="store_true", help="Enable real-time plotting")
     args = parser.parse_args(args)
 
     rclpy.init()
-    node = TopicMonitor(args.topics, args.window, args.csv)
+    node = TopicMonitor(args.topics, args.window, args.csv, args.plot)
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()
