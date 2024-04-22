@@ -57,7 +57,7 @@ class TopicMonitor(Node):
         self.first_row_printed = False
 
         for topic in topics:
-            msg_class = get_msg_class(self, topic)
+            msg_class = get_msg_class(self, topic, blocking=True, include_hidden_topics=True)
             if msg_class:
                 self.create_subscription(
                     msg_class,
