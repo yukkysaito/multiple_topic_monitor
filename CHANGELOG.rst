@@ -2,8 +2,8 @@
 Changelog for package multiple_topic_monitor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.2 (2024-05-08)
+------------------
 * change how to run command
 * Contributors: Yukihito Saito
 
