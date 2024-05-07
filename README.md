@@ -17,10 +17,10 @@ colcon build
 
 ### Running the Node
 
-To run the multiple topic monitor node, use the `ros2 run` command followed by the package name and node name, along with the topics you want to monitor:
+To run the multiple topic monitor node, use the `ros2 topic multiple_topic_monitor` command, along with the topics you want to monitor:
 
 ```bash
-ros2 run multiple_topic_monitor multiple_topic_monitor /topic1 /topic2 /topic3
+ros2 topic multiple_topic_monitor /topic1 /topic2 /topic3
 ```
 
 | Option           | Description                                                                     |
@@ -33,7 +33,7 @@ ros2 run multiple_topic_monitor multiple_topic_monitor /topic1 /topic2 /topic3
 The node will output the frequency (Hz) and delay (if applicable) for each topic being monitored. The delay is measured in seconds.
 
 ```
-yukky@yukky:~/workspace/multiple_topic_monitor$ ros2 run multiple_topic_monitor multiple_topic_monitor /planning/hazard_lights_cmd /tf /perception/obstacle_segmentation/pointcloud -w 10
+yukky@yukky:~/workspace/multiple_topic_monitor$ ros2 topic multiple_topic_monitor /planning/hazard_lights_cmd /tf /perception/obstacle_segmentation/pointcloud -w 10
 [INFO 1713632632.003018708] [topic_monitor]: Subscribed to /planning/hazard_lights_cmd
 [INFO 1713632632.054411974] [topic_monitor]: Subscribed to /tf
 [INFO 1713632632.086228617] [topic_monitor]: Subscribed to /perception/obstacle_segmentation/pointcloud
@@ -64,7 +64,7 @@ yukky@yukky:~/workspace/multiple_topic_monitor$ ros2 run multiple_topic_monitor 
 
 #### csv format
 ```
-yukky@yukky:~/workspace/multiple_topic_monitor/src/multiple_topic_monitor$ ros2 run multiple_topic_monitor multiple_topic_monitor /planning/hazard_lights_cmd /tf /perception/obstacle_segmentation/pointcloud -w 10 --csv
+yukky@yukky:~/workspace/multiple_topic_monitor/src/multiple_topic_monitor$ ros2 topic multiple_topic_monitor /planning/hazard_lights_cmd /tf /perception/obstacle_segmentation/pointcloud -w 10 --csv
 [INFO 1713635027.749710504] [topic_monitor]: Subscribed to /planning/hazard_lights_cmd
 [INFO 1713635027.802425796] [topic_monitor]: Subscribed to /tf
 [INFO 1713635027.833324882] [topic_monitor]: Subscribed to /perception/obstacle_segmentation/pointcloud

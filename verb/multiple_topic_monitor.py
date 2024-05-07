@@ -37,7 +37,9 @@ from argparse import ArgumentParser, ArgumentTypeError
 from collections import deque
 import functools
 import math
-from ros2topic.api import get_msg_class
+from ros2cli.node.strategy import NodeStrategy, add_arguments as add_strategy_node_arguments
+from ros2cli.verb import VerbExtension
+from ros2topic.api import TopicNameCompleter, get_msg_class
 from datetime import datetime
 
 DEFAULT_WINDOW_SIZE = 10000
@@ -47,6 +49,39 @@ def positive_int(value):
     if ivalue <= 0:
         raise ArgumentTypeError(f"{value} is an invalid positive int value")
     return ivalue
+
+class MonitorVerb(VerbExtension):
+    """Monitor ROS topics and display stats."""
+
+    def add_arguments(self, parser, cli_name):
+        add_strategy_node_arguments(parser)
+        arg = parser.add_argument(
+            'topics', nargs='+', help="Topic names to monitor"
+        )
+        arg.completer = TopicNameCompleter(
+            include_hidden_topics_key='include_hidden_topics'
+        )
+        parser.add_argument(
+            '-w', '--window', type=positive_int, default=10000,
+            help='Number of messages to average over'
+        )
+        parser.add_argument(
+            '--csv', action='store_true',
+            help='Enable CSV output mode'
+        )
+
+    def main(self, *, args):
+        rclpy.init()
+        with NodeStrategy(args) as node:
+            monitor = TopicMonitor(
+                topics=args.topics,
+                window_size=args.window,
+                csv_mode=args.csv
+            )
+            rclpy.spin(monitor)
+            monitor.destroy_node()
+        rclpy.shutdown()
+
 
 class TopicMonitor(Node):
     def __init__(self, topics, window_size=10, csv_mode=False):
@@ -136,19 +171,3 @@ class TopicMonitor(Node):
                     max_delay = max(delays) / 1e9
                     std_dev = math.sqrt(sum((x - avg_delay * 1e9) ** 2 for x in delays) / len(delays)) / 1e9
                     self.get_logger().info(f"{topic} Delay (s): Avg: {avg_delay:.3f}, Min: {min_delay:.3f}, Max: {max_delay:.3f}, Std Dev: {std_dev:.5f}")
-
-def main(args=None):
-    parser = ArgumentParser(description="Measure the frequency and delay of topics")
-    parser.add_argument("topics", nargs='+', help="Topic names to monitor")
-    parser.add_argument("-w", "--window", type=positive_int, default=DEFAULT_WINDOW_SIZE, help="Number of messages to average over")
-    parser.add_argument("--csv", action="store_true", help="Enable CSV output mode")
-    args = parser.parse_args(args)
-
-    rclpy.init()
-    node = TopicMonitor(args.topics, args.window, args.csv)
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
-
-if __name__ == "__main__":
-    main(sys.argv[1:])
