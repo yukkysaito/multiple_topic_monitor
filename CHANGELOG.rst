@@ -2,8 +2,8 @@
 Changelog for package multiple_topic_monitor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.1 (2024-05-08)
+------------------
 * update setup.py
 * Create LICENSE
 * Merge pull request `#1 <https://github.com/yukkysaito/multiple_topic_monitor/issues/1>`_ from yukkysaito/main
